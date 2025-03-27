@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Diabetes Treatment Recommendation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      background: #fff;
+      margin: auto;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .container h2 {
+      text-align: center;
+    }
+
+    .form-field {
+      margin-bottom: 15px;
+    }
+
+    .form-field label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .form-field input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      background: #5c85d6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #466bb0;
+    }
+
+    #result, #explanation {
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    #explanation {
+      white-space: pre-wrap;
+      font-weight: normal;
+      color: #333;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Diabetes Treatment Recommendation</h2>
+
+    <div class="form-field"><label>Age:</label><input type="number" id="age"></div>
+    <div class="form-field"><label>Glucose Level:</label><input type="number" id="glucose"></div>
+    <div class="form-field"><label>HbA1c:</label><input type="number" step="0.1" id="hba1c"></div>
+    <div class="form-field"><label>Systolic Blood Pressure:</label><input type="number" id="systolic"></div>
+    <div class="form-field"><label>Diastolic Blood Pressure:</label><input type="number" id="diastolic"></div>
+    <div class="form-field"><label>BMI:</label><input type="number" step="0.1" id="bmi"></div>
+    <div class="form-field"><label>Medication (0 = No, 1 = Yes):</label><input type="number" id="medication"></div>
+    <div class="form-field"><label>Exercise Frequency (times per week):</label><input type="number" id="exercise"></div>
+
+    <button onclick="predictTreatment()">Predict Treatment</button>
+
+    <div id="result"></div>
+    <div id="explanation"></div>
+  </div>
+
+  <script>
+    // Typing animation function
+    function typeText(elementId, text, delay = 20) {
+      const element = document.getElementById(elementId);
+      element.innerText = "";
+      let i = 0;
+      function type() {
+        if (i < text.length) {
+          element.innerText += text.charAt(i);
+          i++;
+          setTimeout(type, delay);
+        }
+      }
+      type();
+    }
+
+    async function predictTreatment() {
+      const patientData = {
+        Age: parseFloat(document.getElementById('age').value),
+        Glucose: parseFloat(document.getElementById('glucose').value),
+        HbA1c: parseFloat(document.getElementById('hba1c').value),
+        Systolic_BP: parseFloat(document.getElementById('systolic').value),
+        Diastolic_BP: parseFloat(document.getElementById('diastolic').value),
+        BMI: parseFloat(document.getElementById('bmi').value),
+        Medication: parseInt(document.getElementById('medication').value),
+        Exercise: parseInt(document.getElementById('exercise').value)
+      };
+
+      // Show loading animation
+      let dotCount = 0;
+      document.getElementById('result').innerText = "Thinking";
+      document.getElementById('explanation').innerText = "";
+      const loadingInterval = setInterval(() => {
+        dotCount = (dotCount + 1) % 4;
+        document.getElementById('result').innerText = "Thinking" + ".".repeat(dotCount);
+      }, 400);
+
+      try {
+        const response = await fetch('http://127.0.0.1:5500/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patientData)
+        });
+
+        const data = await response.json();
+        console.log(data);
+        clearInterval(loadingInterval);
+
+        document.getElementById('result').innerText = "Recommended Treatment: " + data.recommendation;
+        typeText('explanation', "Explanation: " + data.explanation);
+      } catch (error) {
+        clearInterval(loadingInterval);
+        console.error('Error:', error);
+        document.getElementById('result').innerText = "Error in prediction.";
+      }
+    }
+  </script>
+</body>
+</html>
